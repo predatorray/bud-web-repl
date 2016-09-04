@@ -1,0 +1,88 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Bud REPL</title>
+    <link href="/jquery.terminal-0.11.0.min.css" rel="stylesheet">
+    <style>
+        #term {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="term" class="terminal"></div>
+    <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.2.4.min.js"></script>
+    <script type="text/javascript" src="/jquery.terminal-0.11.0.min.js"></script>
+    <script type="text/javascript" src="/dterm.js"></script>
+    <script type="text/javascript">
+        jQuery(function($, undefined) {
+            var PROMPT1 = 'bud> ';
+            var PROMPT2 = '   > ';
+
+            var BudInterrupter = function() {
+            };
+
+            BudInterrupter.prototype.eval = function (source, resultCont, errorCont) {
+                $.ajax({
+                    url: '/repl/eval',
+                    type: "POST",
+                    contentType: "text/plain",
+                    data: source,
+                    dataType: 'text',
+                    success: resultCont,
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        switch (jqXHR.status) {
+                            case 400:
+                                errorCont(jqXHR.responseText || 'Invalid input.');
+                                break;
+                            case 408:
+                                errorCont('Timeout.');
+                                break;
+                            case 500:
+                                errorCont(jqXHR.responseText || 'Server side error.');
+                                break;
+                            default:
+                                errorCont('Unknown error.');
+                                break;
+                        }
+                    }
+                });
+            };
+
+            var interrupter = new BudInterrupter();
+            var sourceCode = '';
+            $('#term').terminal(function (command, term) {
+                if (command.endsWith('\\')) {
+                    term.set_prompt(PROMPT2);
+                    sourceCode += command.substring(0, command.length - 1);
+                    return;
+                }
+
+                sourceCode += (command + '\n');
+                if (sourceCode !== '') {
+                    interrupter.eval(sourceCode, function (result) {
+                        if (result !== undefined && result !== '') {
+                            sourceCode = '';
+                            term.echo(result);
+                            term.set_prompt(PROMPT1);
+                        } else {
+                            term.set_prompt(PROMPT2);
+                        }
+                    }, function (errorMessage) {
+                        sourceCode = '';
+                        term.error(errorMessage);
+                    });
+                }
+            }, {
+                greetings: 'Bud Interpreter (version 1.0-SNAPSHOT)\nCopyright (c) 2016 Wenhao Ji\n',
+                name: 'bud_lisp',
+                prompt: PROMPT1
+            });
+        });
+    </script>
+</body>
+</html>
