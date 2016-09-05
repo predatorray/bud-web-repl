@@ -20,4 +20,4 @@ RUN rm -rf /src/bud /src/bud-web-repl
 RUN rm -rf /root/.m2
 
 WORKDIR /lib/bud
-ENTRYPOINT ["java", "-jar", "/lib/bud/bud-web-repl.jar"]
+ENTRYPOINT ["java", "-jar", "/lib/bud/bud-web-repl-boot.jar"]
