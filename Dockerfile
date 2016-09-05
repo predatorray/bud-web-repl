@@ -1,4 +1,4 @@
-FROM openjdk:7
+FROM openjdk:8
 
 RUN mkdir -p /src
 RUN mkdir -p /lib/bud
